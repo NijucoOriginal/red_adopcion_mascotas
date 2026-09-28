@@ -1,4 +1,6 @@
-package com.example.adopcion_mascotas
+package com.example.adopcion_mascotas.activities
+
+import android.util.Log
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,6 +18,9 @@ import com.example.adopcion_mascotas.ui.theme.Adopcion_mascotasTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("Greeting", "Greeting function called with name: NicolasAndroid")
+        Log.i("Greeting", "Greeting function called with name: NicolasAndroid")
+
         enableEdgeToEdge()
         setContent {
             Adopcion_mascotasTheme {
@@ -36,6 +41,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         text = "Hello $name!",
         modifier = modifier
     )
+
 }
 
 @Preview(showBackground = true)
