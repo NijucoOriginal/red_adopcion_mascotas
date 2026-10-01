@@ -1,9 +1,13 @@
 package domain
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity
 data class Logro(
-    val id: Long,
+    @PrimaryKey(autoGenerate = true) val id: Long,
     var descripcion: String,
     var titulo: String,
-    var cantidadPuntos: Int,
-    var iconoMedalla: String
+    var cantidad_puntos: Int,
+    var icono_medalla: String
 )

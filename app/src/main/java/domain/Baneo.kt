@@ -1,15 +1,32 @@
 package domain
 
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
+@Entity(foreignKeys = [
+    ForeignKey(
+        entity = Usuario::class,
+        parentColumns = ["id"],
+        childColumns = ["usuario_duenio"],
+        onDelete = ForeignKey.CASCADE
+    ),
+    ForeignKey(
+        entity = Usuario::class,
+        parentColumns = ["id"],
+        childColumns = ["moderador"],
+        onDelete = ForeignKey.CASCADE
+    )
+])
 data class Baneo(
-    val id: Long,
+    @PrimaryKey(autoGenerate = true) val id: Long,
     val titulo: String,
     val razon: String,
-    val fechaEmision: LocalDateTime,
-    val fechaInicio: LocalDateTime,
-    val fechaFin: LocalDateTime,
-    val usuarioDuenio: Usuario,
+    val fecha_emision: LocalDateTime,
+    val fecha_inicio: LocalDateTime,
+    val fecha_fin: LocalDateTime,
+    val usuario_duenio: Usuario,
     val moderador: Usuario,
-    val estadoBaneo: EstadoBaneo
+    val estado_baneo: EstadoBaneo
 )

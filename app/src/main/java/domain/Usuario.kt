@@ -1,21 +1,31 @@
 package domain
 
-data class Usuario(val id: Long,
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
+
+@Entity(foreignKeys = [
+    ForeignKey(
+        entity = Reputacion:: class,
+        parentColumns = arrayOf("id"),
+        childColumns = arrayOf("reputacion"),
+        onDelete = ForeignKey.CASCADE
+    )])
+
+data class Usuario(
+                   @PrimaryKey(autoGenerate = true) val id: Long,
                    var nombre_usuario: String,
                    val correo_electronico: String,
                    var contrasenia: String,
-                   var rol: Rol,
-                   var codigo_multiproposito: String,
-                   var primer_nombre: String,
-                   var segundo_nombre: String,
-                   var primer_apellido: String,
-                   var segundo_apellido: String,
-                   var direccion: String,
-                   var telefono: String,
+                   val rol: Rol,
+                   var codigo_multiproposito: String?,
+                   var primer_nombre: String?,
+                   var segundo_nombre: String?,
+                   var primer_apellido: String?,
+                   var segundo_apellido: String?,
+                   var direccion: String?,
+                   var telefono: String?,
                    var estado_usuario: EstadoUsuario,
-                   val seguidos:MutableList<Usuario>,
-                   val notificaciones:MutableList<Notificacion>,
-                   val baneos:MutableList<Baneo>,
                    val reputacion: Reputacion
 ) {
 }

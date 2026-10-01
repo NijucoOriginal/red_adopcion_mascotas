@@ -1,13 +1,24 @@
 package domain
 
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
+@Entity(foreignKeys = [
+    ForeignKey(
+        entity = Usuario::class,
+        parentColumns = ["id"],
+        childColumns = ["usuario_duenio"],
+        onDelete = ForeignKey.CASCADE
+    )
+])
 data class Notificacion(
-    val id: Long,
+    @PrimaryKey(autoGenerate = true) val id: Long,
     val descripcion: String,
     val enlace: String,
     val fecha: LocalDateTime,
-    val usuarioDuenio: Usuario,
+    val usuario_duenio: Usuario,
     val titulo: String,
-    val advertenciaBaneo: Boolean
+    val advertencia_baneo: Boolean
 )

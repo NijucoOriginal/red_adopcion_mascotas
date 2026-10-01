@@ -1,11 +1,14 @@
 package domain
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity
 data class Mascota(
-    val id: Long,
+    @PrimaryKey(autoGenerate = true) val id: Long,
     var nombre: String,
-    var tipoAnimal: TipoAnimal,
+    var tipo_animal: TipoAnimal,
     var altura: Double,
     var peso: Double,
     var longitud: Double,
-    val vacunas: MutableList<Vacuna>,
 )

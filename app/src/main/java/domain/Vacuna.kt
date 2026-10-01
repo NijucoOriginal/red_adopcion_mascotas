@@ -1,10 +1,19 @@
 package domain
 
-import java.time.LocalDate
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
 
-data class Vacuna(val id: Long,
+@Entity(foreignKeys = [
+    ForeignKey(
+        entity = Mascota::class,
+        parentColumns = ["id"],
+        childColumns = ["mascotaAsociada"],
+        onDelete = ForeignKey.CASCADE
+    )
+])
+data class Vacuna(
+                  @PrimaryKey(autoGenerate = true)val id: Long,
                   var nombre: String,
                   var dosis: String,
-                  var fechaDosis: MutableList<LocalDate>,
-                  var fotosCarnetVacunacion: MutableList<String>,
                   var mascotaAsociada: Mascota)
