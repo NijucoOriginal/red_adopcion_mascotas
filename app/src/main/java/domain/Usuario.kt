@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
-@Entity(foreignKeys = [
+/*@Entity(foreignKeys = [
     ForeignKey(
         entity = Reputacion:: class,
         parentColumns = arrayOf("id"),
@@ -12,6 +12,10 @@ import androidx.room.PrimaryKey
         onDelete = ForeignKey.CASCADE
     )])
 
+
+ */
+
+@Entity
 data class Usuario(
                    @PrimaryKey(autoGenerate = true) val id: Long,
                    var nombre_usuario: String,
@@ -26,6 +30,6 @@ data class Usuario(
                    var direccion: String?,
                    var telefono: String?,
                    var estado_usuario: EstadoUsuario,
-                   val reputacion: Reputacion
+                   //val reputacion: Long
 ) {
 }

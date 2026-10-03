@@ -29,9 +29,9 @@ data class Comentario(
     @PrimaryKey(autoGenerate = true) val id: Long,
     var fecha_publicacion: LocalDateTime,
     var cuerpo: String,
-    val usuario_duenio: Usuario,
+    val usuario_duenio: Long,
     val es_admin: Boolean,
-    val respondeA: Comentario?,
+    val respondeA: Long?,
     var cantidad_me_gusta: Int,
-    val publicacion_perteneciente: Publicacion) {
+    val publicacion_perteneciente: Long) {
 }

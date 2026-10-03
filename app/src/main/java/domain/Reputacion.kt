@@ -13,7 +13,7 @@ import androidx.room.PrimaryKey
     )
 ])
 data class Reputacion(@PrimaryKey(autoGenerate = true) val id: Long,
-                      val usuario_perteneciente: Usuario,
+                      val usuario_perteneciente: Long,
                       var nivel: Int,
                       var puntos_totales: Int,
                       var titulo: String) {

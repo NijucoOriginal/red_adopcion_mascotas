@@ -15,5 +15,5 @@ import java.time.LocalDateTime
 ])
 data class Foto_Carnet(@PrimaryKey(autoGenerate = true) val id: Long,
                        var url: String,
-                       var vacuna_asociada: Vacuna) {
+                       var vacuna_asociada: Long) {
 }

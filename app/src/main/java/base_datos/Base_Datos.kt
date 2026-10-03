@@ -8,7 +8,7 @@ import dao.UsuarioDao
 import domain.Usuario
 import domain.Reputacion
 
-@Database(entities = [Usuario::class,Reputacion::class], version = 1)
+@Database(entities = [Usuario::class,Reputacion::class], version = 2,exportSchema = false)
 @TypeConverters(Conversor::class)
 abstract class Base_Datos: RoomDatabase() {
     abstract fun usuarioDao(): UsuarioDao

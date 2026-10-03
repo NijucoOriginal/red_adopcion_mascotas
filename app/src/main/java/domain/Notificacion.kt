@@ -18,7 +18,7 @@ data class Notificacion(
     val descripcion: String,
     val enlace: String,
     val fecha: LocalDateTime,
-    val usuario_duenio: Usuario,
+    val usuario_duenio: Long,
     val titulo: String,
     val advertencia_baneo: Boolean
 )

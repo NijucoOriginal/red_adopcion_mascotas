@@ -26,7 +26,7 @@ data class Baneo(
     val fecha_emision: LocalDateTime,
     val fecha_inicio: LocalDateTime,
     val fecha_fin: LocalDateTime,
-    val usuario_duenio: Usuario,
+    val usuario_duenio: Long,
     val moderador: Usuario,
     val estado_baneo: EstadoBaneo
 )

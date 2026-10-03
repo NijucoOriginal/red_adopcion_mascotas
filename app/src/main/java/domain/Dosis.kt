@@ -16,5 +16,5 @@ import java.time.LocalDateTime
 data class Dosis(@PrimaryKey(autoGenerate = true) val id: Long,
                  var fecha: LocalDateTime,
                  var numero_dosis: Byte,
-                 var vacuna_asociada: Vacuna) {
+                 var vacuna_asociada: Long) {
 }

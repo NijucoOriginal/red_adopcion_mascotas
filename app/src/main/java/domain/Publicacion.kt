@@ -23,7 +23,7 @@ data class Publicacion(
     var descripcion: String,
     var estado_publicacion: EstadoPublicacion,
     var categoria: CategoriaPublicacion,
-    val usuario_duenio: Usuario,
+    val usuario_duenio: Long,
     var latitud: Double,
     var longitud: Double,
     var nombre_ubicacion: String

@@ -15,5 +15,5 @@ import androidx.room.PrimaryKey
 data class Foto(
                 @PrimaryKey(autoGenerate = true) val id: Long,
                 val url: String,
-                val publicacion_asociada: Publicacion) {
+                val publicacion_asociada: Long) {
 }

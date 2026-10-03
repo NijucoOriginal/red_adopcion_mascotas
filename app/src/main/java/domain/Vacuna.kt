@@ -16,4 +16,4 @@ data class Vacuna(
                   @PrimaryKey(autoGenerate = true)val id: Long,
                   var nombre: String,
                   var dosis: String,
-                  var mascotaAsociada: Mascota)
+                  var mascotaAsociada: Long)
