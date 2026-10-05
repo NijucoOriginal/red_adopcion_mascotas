@@ -2,6 +2,7 @@ package domain
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
@@ -23,8 +24,13 @@ import java.time.LocalDateTime
         parentColumns = ["id"],
         childColumns = ["publicacion_perteneciente"],
         onDelete = ForeignKey.CASCADE
+    )],
+    indices = [
+        Index(value = ["usuario_duenio"]),
+        Index(value = ["respondeA"]),
+        Index(value = ["publicacion_perteneciente"]),
+    ]
     )
-])
 data class Comentario(
     @PrimaryKey(autoGenerate = true) val id: Long,
     var fecha_publicacion: LocalDateTime,

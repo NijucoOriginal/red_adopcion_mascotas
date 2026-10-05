@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.UniQuindio.adopcion_mascotas"
+    namespace = "com.example.adopcion_mascotas"
     compileSdk {
         version = release(37)
     }

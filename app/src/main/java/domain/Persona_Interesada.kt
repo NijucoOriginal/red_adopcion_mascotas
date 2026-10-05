@@ -2,6 +2,7 @@ package domain
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 
 @Entity(
     primaryKeys = ["usuario_interesado","publicacion_id"],
@@ -18,6 +19,10 @@ import androidx.room.ForeignKey
             childColumns = ["publicacion_id"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index(value = ["usuario_interesado"]),
+        Index(value = ["publicacion_id"])
     ]
 )
 data class Persona_Interesada(val usuario_interesado: Long,

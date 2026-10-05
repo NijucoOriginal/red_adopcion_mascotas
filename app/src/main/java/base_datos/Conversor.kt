@@ -7,6 +7,7 @@ import domain.EstadoPublicacion
 import domain.EstadoUsuario
 import domain.Rol
 import domain.TipoAnimal
+import java.time.LocalDateTime
 
 class Conversor {
 
@@ -45,6 +46,12 @@ class Conversor {
 
     @TypeConverter
     fun toRol(value: String): Rol= Rol.valueOf(value)
+
+    @TypeConverter
+    fun fromLocalDateTime(value: LocalDateTime): String=value.toString()
+
+    @TypeConverter
+    fun toLocalDateTime(value: String): LocalDateTime= LocalDateTime.parse(value)
 
 
 

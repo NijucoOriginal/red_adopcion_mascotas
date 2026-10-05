@@ -2,6 +2,7 @@ package domain
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 
 @Entity(
     primaryKeys = ["id_seguido","id_duenio"],
@@ -18,6 +19,11 @@ import androidx.room.ForeignKey
             childColumns = ["id_duenio"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+
+    indices = [
+        Index(value = ["id_seguido"]),
+        Index(value = ["id_duenio"])
     ]
 )
 data class Seguido(val id_seguido: Long,

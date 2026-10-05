@@ -2,6 +2,7 @@ package domain
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
@@ -11,8 +12,11 @@ import java.time.LocalDateTime
         parentColumns = ["id"],
         childColumns = ["usuario_duenio"],
         onDelete = ForeignKey.CASCADE
+    )],
+    indices = [
+        Index(value = ["usuario_duenio"])
+    ]
     )
-])
 data class Notificacion(
     @PrimaryKey(autoGenerate = true) val id: Long,
     val descripcion: String,

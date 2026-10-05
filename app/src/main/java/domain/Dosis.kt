@@ -2,6 +2,7 @@ package domain
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
@@ -11,8 +12,11 @@ import java.time.LocalDateTime
         parentColumns = ["id"],
         childColumns = ["vacuna_asociada"],
         onDelete = ForeignKey.CASCADE
-    )
-])
+    )],
+    indices = [
+        Index(value = ["vacuna_asociada"])
+    ]
+)
 data class Dosis(@PrimaryKey(autoGenerate = true) val id: Long,
                  var fecha: LocalDateTime,
                  var numero_dosis: Byte,

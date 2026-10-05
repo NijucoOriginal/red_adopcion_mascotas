@@ -2,6 +2,7 @@ package domain
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 import com.google.android.gms.maps.model.LatLng
@@ -12,8 +13,11 @@ import com.google.android.gms.maps.model.LatLng
         parentColumns = ["id"],
         childColumns = ["usuario_duenio"],
         onDelete = ForeignKey.CASCADE
+    )],
+    indices = [
+        Index(value = ["usuario_duenio"])
+    ]
     )
-])
 data class Publicacion(
     @PrimaryKey(autoGenerate = true) val id: Long,
     var cantidad_interesa: Int,
