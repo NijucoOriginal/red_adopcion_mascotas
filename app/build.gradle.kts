@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.google.maps)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     ksp(libs.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
