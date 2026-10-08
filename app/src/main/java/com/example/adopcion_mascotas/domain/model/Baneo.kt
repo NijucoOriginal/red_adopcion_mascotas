@@ -33,5 +33,5 @@ data class Baneo(
     val fecha_fin: LocalDateTime,
     val usuario_duenio: Long,
     val moderador: Long,
-    val estado_baneo: com.example.adopcion_mascotas.domain.model.EstadoBaneo
+    val estado_baneo: EstadoBaneo
 )

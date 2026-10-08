@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class Mascota(
     @PrimaryKey(autoGenerate = true) val id: Long,
     var nombre: String,
-    var tipo_animal: com.example.adopcion_mascotas.domain.model.TipoAnimal,
+    var tipo_animal: TipoAnimal,
     var altura: Double,
     var peso: Double,
     var longitud: Double,

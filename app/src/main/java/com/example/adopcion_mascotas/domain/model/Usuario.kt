@@ -20,7 +20,7 @@ data class Usuario(
     var nombre_usuario: String,
     val correo_electronico: String,
     var contrasenia: String,
-    val rol: com.example.adopcion_mascotas.domain.model.Rol,
+    val rol: Rol,
     var codigo_multiproposito: String?,
     var primer_nombre: String?,
     var segundo_nombre: String?,
@@ -28,7 +28,7 @@ data class Usuario(
     var segundo_apellido: String?,
     var direccion: String?,
     var telefono: String?,
-    var estado_usuario: com.example.adopcion_mascotas.domain.model.EstadoUsuario,
+    var estado_usuario: EstadoUsuario,
                    //val reputacion: Long
 ) {
 }
