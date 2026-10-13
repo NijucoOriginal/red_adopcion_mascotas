@@ -1,15 +1,6 @@
-package com.example.adopcion_mascotas.features.Login
+package com.example.adopcion_mascotas.features.login
 
-import android.util.Patterns
-import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import com.example.adopcion_mascotas.core.util.RequestResult
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 
 data class LoginUiState(

@@ -1,4 +1,4 @@
-package com.example.adopcion_mascotas.features.Login
+package com.example.adopcion_mascotas.features.login
 
 import androidx.compose.runtime.Composable
 
