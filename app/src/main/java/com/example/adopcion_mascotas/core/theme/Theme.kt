@@ -10,30 +10,37 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = Primary,
+    onPrimary = OnPrimary,
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = OnPrimaryContainer,
+    secondary = Secondary,
+    onSecondary = OnSecondary,
+    secondaryContainer = SecondaryContainer,
+    onSecondaryContainer = OnSecondaryContainer,
+    tertiary = Tertiary,
+    tertiaryContainer = TertiaryContainer,
+    background = Surface,
+    onBackground = OnSurface,
+    surface = Surface,
+    onSurface = OnSurface,
+    onSurfaceVariant = OnSurfaceVariant,
+    surfaceContainerLowest = SurfaceContainerLowest,
+    surfaceContainerLow = SurfaceContainerLow,
+    surfaceContainer = SurfaceContainer,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = SurfaceContainerHighest,
+    outline = Outline,
+    outlineVariant = OutlineVariant,
+    error = Error,
+    errorContainer = ErrorContainer,
+    onErrorContainer = OnErrorContainer
 )
 
 @Composable
-fun Adopcion_mascotasTheme(
+/*fun Adopcion_mascotasTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
@@ -51,6 +58,17 @@ fun Adopcion_mascotasTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = Typography,
+        content = content
+    )
+}
+
+ */
+fun Adopcion_mascotasTheme(
+    content: @Composable () -> Unit
+) {
+    MaterialTheme(
+        colorScheme = LightColorScheme,
         typography = Typography,
         content = content
     )
