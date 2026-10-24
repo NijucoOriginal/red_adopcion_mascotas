@@ -1,5 +1,6 @@
 package com.example.adopcion_mascotas.features.activacion
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.adopcion_mascotas.core.util.registrarUsuario
@@ -42,6 +43,7 @@ class ActivacionViewModel(): ViewModel() {
             try {
                 val valido = verificarCodigo(codigoIngresado, correo)
                 if (valido) {
+                    Log.i("Usuario activado","Usuario activado con exito")
                     _uiState.update { it.copy(codigoEnviado = true) }
                 } else {
                     _uiState.update { it.copy(codigoError = "El código no es correcto") }

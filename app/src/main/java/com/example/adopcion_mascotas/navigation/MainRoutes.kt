@@ -5,6 +5,14 @@ import kotlinx.serialization.Serializable
 sealed class MainRoutes {
 
     @Serializable
+    data class FeedMod(val token: String) : MainRoutes()
+    @Serializable
+    data class Feed(val token: String) : MainRoutes()
+
+    @Serializable
+    data object Recuperacion : MainRoutes()
+
+    @Serializable
     data object Principal : MainRoutes()
 
     @Serializable

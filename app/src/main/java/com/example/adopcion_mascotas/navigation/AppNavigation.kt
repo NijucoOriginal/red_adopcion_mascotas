@@ -9,8 +9,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.adopcion_mascotas.features.activacion.ActivacionScreen
+import com.example.adopcion_mascotas.features.feed.FeedModScreen
+import com.example.adopcion_mascotas.features.feed.FeedScreen
 import com.example.adopcion_mascotas.features.login.LoginScreen
 import com.example.adopcion_mascotas.features.principal.PrincipalScreen
+import com.example.adopcion_mascotas.features.recuperacion.RecuperacionScreen
 import com.example.adopcion_mascotas.features.register.RegistroScreen
 
 @Composable
@@ -38,7 +41,43 @@ fun AppNavigation() {
             }
 
             composable<MainRoutes.Login> {
-                LoginScreen()
+                LoginScreen(
+                    onNavigateToRegistro = { navController.navigate(MainRoutes.Registro) },
+                    onNavigateToRecuperacion = { navController.navigate(MainRoutes.Recuperacion) },
+                    onNavigateToFeed = { token ->
+                        navController.navigate(MainRoutes.Feed(token)) {
+                            popUpTo(MainRoutes.Login) { inclusive = true }
+                        }
+                    },
+                    onNavigateToFeedMod = { token ->
+                        navController.navigate(MainRoutes.FeedMod(token)) {
+                            popUpTo(MainRoutes.Login) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable<MainRoutes.Feed> {
+                val args = it.toRoute<MainRoutes.Feed>()
+                FeedScreen(
+                    token = args.token,
+                    onSesionExpirada = {
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    },
+                    onPublicacionClick = { /* pendiente */ },
+                    onCrearPublicacion = { /* pendiente */ }
+                )
+            }
+
+            composable<MainRoutes.FeedMod> {
+                val args = it.toRoute<MainRoutes.FeedMod>()
+                FeedModScreen(token = args.token)
+            }
+
+            composable<MainRoutes.Recuperacion> {
+                RecuperacionScreen()
             }
 
             composable<MainRoutes.Registro> {
@@ -61,8 +100,6 @@ fun AppNavigation() {
                     onNavigateToLogin = { navController.navigate(MainRoutes.Login) }
                 )
             }
-
-
 
         }
     }
