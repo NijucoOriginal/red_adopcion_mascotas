@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.adopcion_mascotas.core.theme.Adopcion_mascotasTheme
 import com.example.adopcion_mascotas.features.principal.PrincipalScreen
 import com.example.adopcion_mascotas.features.principal.PrincipalViewModel
+import com.example.adopcion_mascotas.navigation.AppNavigation
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,24 +27,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Adopcion_mascotasTheme {
-                PrincipalScreen()
+                AppNavigation()
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Adopcion_mascotasTheme {
-        Greeting("Android")
     }
 }

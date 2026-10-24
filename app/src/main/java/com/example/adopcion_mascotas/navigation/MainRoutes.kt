@@ -13,4 +13,7 @@ sealed class MainRoutes {
     @Serializable
     data object Registro : MainRoutes()
 
+
+    @Serializable
+    data class Activacion(val correoElectronico: String): MainRoutes()
 }
