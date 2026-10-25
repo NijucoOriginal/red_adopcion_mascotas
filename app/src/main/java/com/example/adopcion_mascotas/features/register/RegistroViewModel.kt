@@ -3,8 +3,9 @@ package com.example.adopcion_mascotas.features.register
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.adopcion_mascotas.core.util.generarCodigoUnico
-import com.example.adopcion_mascotas.core.util.registrarUsuario
+import com.example.adopcion_mascotas.core.util.PersistenciaSimulada.registrarUsuario
+import com.example.adopcion_mascotas.core.util.PersistenciaSimulada.generarCodigoUnico
+import com.example.adopcion_mascotas.core.util.PersistenciaSimulada.verificarCodigo
 import com.example.adopcion_mascotas.domain.model.EstadoUsuario
 import com.example.adopcion_mascotas.domain.model.Rol
 import com.example.adopcion_mascotas.features.principal.PrincipalUiState

@@ -27,20 +27,19 @@ private fun CategoriaPublicacion.colors(): Pair<Color, Color> = when (this) {
     CategoriaPublicacion.TEMPORALES -> BadgeFosterBg to BadgeFosterFg
     CategoriaPublicacion.ENCONTRADOS -> BadgeFoundBg to BadgeFoundFg
     CategoriaPublicacion.VETERINARIA -> BadgeFoundBg to BadgeFoundFg
-
 }
 
 @Composable
 fun StatusBadge(categoria: CategoriaPublicacion, modifier: Modifier = Modifier) {
     val (bg, fg) = categoria.colors()
     Text(
-        text = categoria.name, // o usa un label si lo defines en el enum
+        text = categoria.name,
         color = fg,
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold,
         modifier = modifier
             .clip(CircleShape)
-            .background(bg)
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp) // primero el relleno...
+            .background(bg)                                // ...y luego el fondo, que lo cubre
     )
 }

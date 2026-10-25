@@ -9,10 +9,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.adopcion_mascotas.features.activacion.ActivacionScreen
+import com.example.adopcion_mascotas.features.createpost.CrearPublicacionScreen
 import com.example.adopcion_mascotas.features.feed.FeedModScreen
 import com.example.adopcion_mascotas.features.feed.FeedScreen
 import com.example.adopcion_mascotas.features.login.LoginScreen
 import com.example.adopcion_mascotas.features.principal.PrincipalScreen
+import com.example.adopcion_mascotas.features.publicacion.FotosVacunasScreen
+import com.example.adopcion_mascotas.features.publicacion.PublicacionScreen
 import com.example.adopcion_mascotas.features.recuperacion.RecuperacionScreen
 import com.example.adopcion_mascotas.features.register.RegistroScreen
 
@@ -66,8 +69,38 @@ fun AppNavigation() {
                             popUpTo(navController.graph.id) { inclusive = true }
                         }
                     },
-                    onPublicacionClick = { /* pendiente */ },
-                    onCrearPublicacion = { /* pendiente */ }
+                    onPublicacionClick = { id ->
+                        navController.navigate(MainRoutes.DetallePublicacion(id, args.token))
+                    },
+                    onCrearPublicacion = {
+                        navController.navigate(MainRoutes.CrearPublicacion(args.token))
+                    },
+                    onPerfilClick = { /* pendiente: perfil */ }
+                )
+            }
+
+            composable<MainRoutes.DetallePublicacion> {
+                val args = it.toRoute<MainRoutes.DetallePublicacion>()
+                PublicacionScreen(
+                    publicacionId = args.publicacionId,
+                    token = args.token,
+                    onNavigateBack = { navController.popBackStack() },
+                    onSesionExpirada = {
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    },
+                    onVerFotosClick = { mascotaId ->
+                        navController.navigate(MainRoutes.FotosVacunas(mascotaId))
+                    }
+                )
+            }
+
+            composable<MainRoutes.FotosVacunas> {
+                val args = it.toRoute<MainRoutes.FotosVacunas>()
+                FotosVacunasScreen(
+                    mascotaId = args.mascotaId,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
@@ -98,6 +131,15 @@ fun AppNavigation() {
                         navController.popBackStack()
                     },
                     onNavigateToLogin = { navController.navigate(MainRoutes.Login) }
+                )
+            }
+
+            composable<MainRoutes.CrearPublicacion> {
+                val args = it.toRoute<MainRoutes.CrearPublicacion>()
+                CrearPublicacionScreen(
+                    token = args.token,
+                    onNavigateBack = { navController.popBackStack() },
+                    onPublicacionCreada = { navController.popBackStack() }
                 )
             }
 

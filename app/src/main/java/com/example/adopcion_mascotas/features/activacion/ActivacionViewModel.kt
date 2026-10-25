@@ -3,8 +3,9 @@ package com.example.adopcion_mascotas.features.activacion
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.adopcion_mascotas.core.util.registrarUsuario
-import com.example.adopcion_mascotas.core.util.verificarCodigo
+import com.example.adopcion_mascotas.core.util.PersistenciaSimulada.registrarUsuario
+import com.example.adopcion_mascotas.core.util.PersistenciaSimulada.generarCodigoUnico
+import com.example.adopcion_mascotas.core.util.PersistenciaSimulada.verificarCodigo
 import com.example.adopcion_mascotas.domain.model.Usuario
 import com.example.adopcion_mascotas.features.register.RegistroUiState
 import kotlinx.coroutines.flow.MutableStateFlow
