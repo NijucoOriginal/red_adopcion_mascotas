@@ -172,7 +172,14 @@ fun AppNavigation() {
             }
 
             composable<MainRoutes.Recuperacion> {
-                RecuperacionScreen()
+                RecuperacionScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onRecuperacionExitosa = {
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(MainRoutes.Login) { inclusive = true }
+                        }
+                    }
+                )
             }
 
             composable<MainRoutes.Registro> {

@@ -3,6 +3,7 @@ package com.example.adopcion_mascotas.core.util
 import com.example.adopcion_mascotas.domain.model.*
 import java.time.LocalDateTime
 import java.util.UUID
+import android.util.Log
 
 // ---------- Tipos de apoyo ----------
 
@@ -10,6 +11,12 @@ data class SesionToken(
     val token: String,
     val correoElectronico: String,
     var ultimaActividad: Long
+)
+
+data class CodigoRecuperacion(
+    val codigo: String,
+    val expira: LocalDateTime,
+    var intentosRestantes: Int
 )
 
 sealed interface ResultadoLogin {
@@ -65,6 +72,13 @@ data class EdicionPublicacion(
 )
 
 object PersistenciaSimulada {
+
+    private const val MINUTOS_CODIGO_RECUPERACION = 10L
+    private const val INTENTOS_CODIGO_RECUPERACION = 3
+    private const val MENSAJE_CODIGO_INVALIDO = "El código no es válido. Solicita uno nuevo"
+
+    // Código de recuperación activo por correo
+    private val _codigosRecuperacion = mutableMapOf<String, CodigoRecuperacion>()
 
     private const val TIEMPO_INACTIVIDAD_MS = 20L * 60 * 1000
 
@@ -583,6 +597,66 @@ object PersistenciaSimulada {
         }
 
         return accion(publicacion)
+    }
+
+    // ---------- Recuperación de contraseña ----------
+
+    // Solo cuentas activas y sin baneo reciben código. Nunca informa si el correo existe.
+    fun solicitarCodigoRecuperacion(correo: String) {
+        val usuario = buscarUsuarioExistente(correo) ?: return
+        if (usuario.estado_usuario != EstadoUsuario.ACTIVO || estaBaneado(usuario.id)) return
+
+        val codigo = (10000..99999).random().toString()
+        _codigosRecuperacion[correo] = CodigoRecuperacion(
+            codigo = codigo,
+            expira = LocalDateTime.now().plusMinutes(MINUTOS_CODIGO_RECUPERACION),
+            intentosRestantes = INTENTOS_CODIGO_RECUPERACION
+        )
+
+        // Simulación de envío: el código aparece en Logcat con el filtro "Recuperacion"
+        // TODO: sustituir por el envío real del correo cuando exista
+        Log.i("Recuperacion", "Código de recuperación para $correo: $codigo")
+    }
+
+    fun cambiarContraseniaConCodigo(
+        correo: String,
+        codigo: String,
+        nuevaContrasenia: String
+    ): Resultado<Unit> {
+        UsuarioValidators.contrasenia(nuevaContrasenia)?.let { return Resultado.Error(it) }
+
+        val usuario = buscarUsuarioExistente(correo)
+            ?: return Resultado.Error(MENSAJE_CODIGO_INVALIDO)
+
+        // Las cuentas baneadas o pendientes no pueden cambiar la contraseña
+        if (usuario.estado_usuario != EstadoUsuario.ACTIVO || estaBaneado(usuario.id)) {
+            return Resultado.Error(MENSAJE_CODIGO_INVALIDO)
+        }
+
+        val registro = _codigosRecuperacion[correo]
+            ?: return Resultado.Error(MENSAJE_CODIGO_INVALIDO)
+
+        if (LocalDateTime.now().isAfter(registro.expira)) {
+            _codigosRecuperacion.remove(correo)
+            return Resultado.Error("El código expiró. Solicita uno nuevo")
+        }
+
+        if (codigo != registro.codigo) {
+            registro.intentosRestantes--
+            if (registro.intentosRestantes <= 0) {
+                _codigosRecuperacion.remove(correo)
+                return Resultado.Error("Demasiados intentos. Solicita un nuevo código")
+            }
+            return Resultado.Error(
+                "Código incorrecto. Te quedan ${registro.intentosRestantes} intentos"
+            )
+        }
+
+        // Código correcto: cambiar la contraseña, borrar el código y cerrar sesiones abiertas
+        usuario.contrasenia = nuevaContrasenia
+        _codigosRecuperacion.remove(correo)
+        cerrarSesionesDe(correo)
+        return Resultado.Exito(Unit)
     }
 
     // ---------- Moderación ----------
