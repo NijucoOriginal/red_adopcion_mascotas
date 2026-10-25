@@ -146,7 +146,29 @@ fun AppNavigation() {
 
             composable<MainRoutes.FeedMod> {
                 val args = it.toRoute<MainRoutes.FeedMod>()
-                FeedModScreen(token = args.token)
+                FeedModScreen(
+                    token = args.token,
+                    onSesionExpirada = {
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    },
+                    onPublicacionClick = { id ->
+                        navController.navigate(MainRoutes.DetallePublicacion(id, args.token))
+                    },
+                    onCrearPublicacion = {
+                        navController.navigate(MainRoutes.CrearPublicacion(args.token))
+                    },
+                    onVerPerfilClick = { /* pendiente: perfil */ },
+                    onVerHistorialClick = {
+                        navController.navigate(MainRoutes.HistorialPublicaciones(args.token))
+                    },
+                    onCerrarSesion = {
+                        navController.navigate(MainRoutes.Principal) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    }
+                )
             }
 
             composable<MainRoutes.Recuperacion> {

@@ -829,6 +829,31 @@ object PersistenciaSimulada {
         }
     }
 
+    // ---------- Panel de moderación ----------
+
+    // Todas las publicaciones, de cualquier estado, para el moderador
+    fun publicacionesParaModerador(token: String): Resultado<List<Publicacion>> {
+        when (val r = moderadorDeSesion(token)) {
+            is Resultado.Exito -> Unit
+            is Resultado.Error -> return r
+            Resultado.SesionExpirada -> return Resultado.SesionExpirada
+        }
+        return Resultado.Exito(_publicaciones.sortedByDescending { it.fecha_publicacion })
+    }
+
+    // Lista de todos los usuarios de la plataforma, para el moderador
+    fun listarUsuarios(token: String): Resultado<List<Usuario>> {
+        when (val r = moderadorDeSesion(token)) {
+            is Resultado.Exito -> Unit
+            is Resultado.Error -> return r
+            Resultado.SesionExpirada -> return Resultado.SesionExpirada
+        }
+        return Resultado.Exito(_usuarios.sortedBy { it.nombre_usuario })
+    }
+
+    // Baneo vigente de un usuario, o null si no tiene ninguno
+    fun obtenerBaneoActivo(usuarioId: Long): Baneo? = baneoActivo(usuarioId)
+
     // ---------- Utilidad ----------
 
     // Siguiente id disponible para una lista de entidades con id Long

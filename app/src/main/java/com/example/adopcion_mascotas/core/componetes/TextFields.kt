@@ -1,9 +1,6 @@
 package com.example.adopcion_mascotas.core.componetes
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,30 +10,44 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+
 
 @Composable
 fun HuellasTextField(
@@ -58,17 +69,11 @@ fun HuellasTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-        // El modifier del llamador va primero: así un weight(1f) dentro de una Row
-        // se respeta en lugar de quedar anulado por fillMaxWidth()
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         enabled = enabled,
-        leadingIcon = leadingIcon?.let { icono ->
-            { Icon(icono, contentDescription = null) }
-        },
+        leadingIcon = leadingIcon?.let { { Icon(it, contentDescription = null) } },
         isError = error != null,
-        supportingText = (error ?: helper)?.let { texto ->
-            { Text(texto) }
-        },
+        supportingText = (error ?: helper)?.let { { Text(it) } },
         singleLine = singleLine,
         minLines = minLines,
         shape = RoundedCornerShape(16.dp),
@@ -79,7 +84,7 @@ fun HuellasTextField(
 
 @Composable
 fun HuellasCodigoField(
-    codigo: String,
+    codigo: String,                       // el valor completo, por ejemplo "12345"
     onCodigoChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     longitud: Int = 5,
@@ -89,7 +94,7 @@ fun HuellasCodigoField(
     val focusManager = LocalFocusManager.current
 
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
     ) {
         repeat(longitud) { index ->
@@ -103,8 +108,9 @@ fun HuellasCodigoField(
 
                     // Reconstruimos el código completo con este dígito cambiado
                     val lista = codigo.padEnd(longitud, ' ').toMutableList()
-                    lista[index] = soloNumero.firstOrNull() ?: ' '
-                    onCodigoChange(lista.joinToString("").trimEnd())
+                    lista[index] = if (soloNumero.isEmpty()) ' ' else soloNumero[0]
+                    val nuevoCodigo = lista.joinToString("").trimEnd()
+                    onCodigoChange(nuevoCodigo)
 
                     // Avanzar al siguiente campo si se escribió algo
                     if (soloNumero.isNotEmpty() && index < longitud - 1) {
@@ -119,9 +125,7 @@ fun HuellasCodigoField(
                         if (evento.key == Key.Backspace && digito.isEmpty() && index > 0) {
                             focusRequesters[index - 1].requestFocus()
                             true
-                        } else {
-                            false
-                        }
+                        } else false
                     },
                 singleLine = true,
                 isError = error != null,
@@ -138,9 +142,9 @@ fun HuellasCodigoField(
         }
     }
 
-    error?.let { mensaje ->
+    if (error != null) {
         Text(
-            text = mensaje,
+            text = error,
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(top = 8.dp)
@@ -160,7 +164,6 @@ fun HuellasPasswordField(
     keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
     var visible by rememberSaveable { mutableStateOf(false) }
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -176,9 +179,7 @@ fun HuellasPasswordField(
             }
         },
         isError = error != null,
-        supportingText = (error ?: helper)?.let { texto ->
-            { Text(texto) }
-        },
+        supportingText = (error ?: helper)?.let { { Text(it) } },
         singleLine = true,
         shape = RoundedCornerShape(16.dp),
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
