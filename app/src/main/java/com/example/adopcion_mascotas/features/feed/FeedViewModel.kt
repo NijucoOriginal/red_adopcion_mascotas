@@ -52,4 +52,8 @@ class FeedViewModel : ViewModel() {
         }
         filtro.value = if (filtro.value == type) null else type
     }
+
+    fun cerrarSesion(token: String) {
+        PersistenciaSimulada.cerrarSesion(token)
+    }
 }

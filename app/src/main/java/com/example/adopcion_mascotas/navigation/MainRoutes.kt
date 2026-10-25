@@ -5,6 +5,12 @@ import kotlinx.serialization.Serializable
 sealed class MainRoutes {
 
     @Serializable
+    data class HistorialPublicaciones(val token: String) : MainRoutes()
+
+    @Serializable
+    data class EditarPublicacion(val publicacionId: Long, val token: String) : MainRoutes()
+
+    @Serializable
     data class FotosVacunas(val mascotaId: Long) : MainRoutes()
 
     @Serializable

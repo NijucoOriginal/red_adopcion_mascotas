@@ -2,9 +2,12 @@ package com.example.adopcion_mascotas.features.publicacion
 
 import androidx.lifecycle.ViewModel
 import com.example.adopcion_mascotas.core.util.PersistenciaSimulada
+import com.example.adopcion_mascotas.core.util.Resultado
 import com.example.adopcion_mascotas.core.util.ResultadoComentario
 import com.example.adopcion_mascotas.core.util.ResultadoMeGusta
+import com.example.adopcion_mascotas.domain.model.EstadoPublicacion
 import com.example.adopcion_mascotas.domain.model.Publicacion
+import com.example.adopcion_mascotas.domain.model.Rol
 import com.example.adopcion_mascotas.domain.model.TipoAnimal
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +43,7 @@ data class PublicacionUiState(
     val isLoading: Boolean = true,
     val notFound: Boolean = false,
     val isInterested: Boolean = false,
+    val esModerador: Boolean = false,
     val mascotas: List<MascotaItem> = emptyList(),
     val comentarios: List<ComentarioItem> = emptyList(),
     val textoComentario: String = "",
@@ -63,21 +67,34 @@ class PublicacionViewModel : ViewModel() {
         this.token = token
         correoUsuario = PersistenciaSimulada.correoDeToken(token)
 
-        val pub = PersistenciaSimulada.obtenerPublicacion(publicacionId)
-        val interesado = correoUsuario?.let {
-            PersistenciaSimulada.estaInteresado(publicacionId, it)
-        } ?: false
+        val esModerador = correoUsuario
+            ?.let { PersistenciaSimulada.buscarUsuarioExistente(it)?.rol } == Rol.MODERADOR
 
-        _uiState.update {
-            it.copy(
-                publicacion = pub,
-                isLoading = false,
-                notFound = pub == null,
-                isInterested = interesado
-            )
+        when (val r = PersistenciaSimulada.obtenerPublicacionVisible(token, publicacionId)) {
+            is Resultado.Exito -> {
+                val interesado = correoUsuario?.let {
+                    PersistenciaSimulada.estaInteresado(publicacionId, it)
+                } ?: false
+
+                _uiState.update {
+                    it.copy(
+                        publicacion = r.datos,
+                        isLoading = false,
+                        notFound = false,
+                        isInterested = interesado,
+                        esModerador = esModerador
+                    )
+                }
+                cargarMascotas()
+                cargarComentarios()
+            }
+            is Resultado.Error -> {
+                _uiState.update { it.copy(isLoading = false, notFound = true) }
+            }
+            Resultado.SesionExpirada -> {
+                _uiState.update { it.copy(isLoading = false, sesionExpirada = true) }
+            }
         }
-        cargarMascotas()
-        cargarComentarios()
     }
 
     private fun cargarMascotas() {
@@ -173,6 +190,25 @@ class PublicacionViewModel : ViewModel() {
             ResultadoMeGusta.SesionExpirada -> {
                 _uiState.update { it.copy(sesionExpirada = true) }
             }
+        }
+    }
+
+    fun onModerarClick(nuevoEstado: EstadoPublicacion) {
+        val pub = _uiState.value.publicacion ?: return
+
+        when (val r = PersistenciaSimulada.moderarPublicacion(token, pub.id, nuevoEstado)) {
+            is Resultado.Exito -> _uiState.update {
+                it.copy(
+                    publicacion = r.datos,
+                    mensaje = if (nuevoEstado == EstadoPublicacion.ADMITIDO) {
+                        "Publicación admitida"
+                    } else {
+                        "Publicación rechazada"
+                    }
+                )
+            }
+            is Resultado.Error -> _uiState.update { it.copy(mensaje = r.mensaje) }
+            Resultado.SesionExpirada -> _uiState.update { it.copy(sesionExpirada = true) }
         }
     }
 

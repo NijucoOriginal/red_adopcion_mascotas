@@ -367,29 +367,30 @@ private fun ComentariosSection(
             fontWeight = FontWeight.SemiBold
         )
 
-        if (!activados) {
+        // El formulario solo aparece si los comentarios están activos
+        if (activados) {
+            HuellasTextField(
+                value = texto,
+                onValueChange = onTextoChange,
+                label = "Escribe un comentario",
+                error = error,
+                singleLine = false,
+                minLines = 2,
+                imeAction = ImeAction.Default
+            )
+            PrimaryButton(text = "Enviar comentario", onClick = onEnviar)
+        } else {
             Text(
-                "Los comentarios están desactivados en esta publicación",
-                style = MaterialTheme.typography.bodyMedium,
+                "Los comentarios están desactivados. Los anteriores siguen visibles.",
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            return@Column
         }
 
-        HuellasTextField(
-            value = texto,
-            onValueChange = onTextoChange,
-            label = "Escribe un comentario",
-            error = error,
-            singleLine = false,
-            minLines = 2,
-            imeAction = ImeAction.Default
-        )
-        PrimaryButton(text = "Enviar comentario", onClick = onEnviar)
-
+        // La lista siempre se muestra, también con comentarios desactivados
         if (comentarios.isEmpty()) {
             Text(
-                "Aún no hay comentarios. ¡Sé el primero!",
+                "Aún no hay comentarios",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

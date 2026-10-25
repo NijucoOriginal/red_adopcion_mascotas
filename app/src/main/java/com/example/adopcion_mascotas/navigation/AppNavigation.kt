@@ -12,6 +12,8 @@ import com.example.adopcion_mascotas.features.activacion.ActivacionScreen
 import com.example.adopcion_mascotas.features.createpost.CrearPublicacionScreen
 import com.example.adopcion_mascotas.features.feed.FeedModScreen
 import com.example.adopcion_mascotas.features.feed.FeedScreen
+import com.example.adopcion_mascotas.features.feed.HistorialPublicacionesScreen
+import com.example.adopcion_mascotas.features.historial.EditarPublicacionScreen
 import com.example.adopcion_mascotas.features.login.LoginScreen
 import com.example.adopcion_mascotas.features.principal.PrincipalScreen
 import com.example.adopcion_mascotas.features.publicacion.FotosVacunasScreen
@@ -75,7 +77,45 @@ fun AppNavigation() {
                     onCrearPublicacion = {
                         navController.navigate(MainRoutes.CrearPublicacion(args.token))
                     },
-                    onPerfilClick = { /* pendiente: perfil */ }
+                    onVerPerfilClick = { /* pendiente: perfil */ },
+                    onVerHistorialClick = {
+                        navController.navigate(MainRoutes.HistorialPublicaciones(args.token))
+                    },
+                    onCerrarSesion = {
+                        navController.navigate(MainRoutes.Principal) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable<MainRoutes.HistorialPublicaciones> {
+                val args = it.toRoute<MainRoutes.HistorialPublicaciones>()
+                HistorialPublicacionesScreen(
+                    token = args.token,
+                    onNavigateBack = { navController.popBackStack() },
+                    onSesionExpirada = {
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    },
+                    onModificarClick = { publicacionId ->
+                        navController.navigate(MainRoutes.EditarPublicacion(publicacionId, args.token))
+                    }
+                )
+            }
+
+            composable<MainRoutes.EditarPublicacion> {
+                val args = it.toRoute<MainRoutes.EditarPublicacion>()
+                EditarPublicacionScreen(
+                    publicacionId = args.publicacionId,
+                    token = args.token,
+                    onNavigateBack = { navController.popBackStack() },
+                    onSesionExpirada = {
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    }
                 )
             }
 

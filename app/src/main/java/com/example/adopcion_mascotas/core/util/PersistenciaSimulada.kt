@@ -34,6 +34,13 @@ sealed interface ResultadoMeGusta {
     data object SesionExpirada : ResultadoMeGusta
 }
 
+// Resultado genérico para operaciones que devuelven datos o pueden fallar por sesión o permisos
+sealed interface Resultado<out T> {
+    data class Exito<T>(val datos: T) : Resultado<T>
+    data class Error(val mensaje: String) : Resultado<Nothing>
+    data object SesionExpirada : Resultado<Nothing>
+}
+
 // Datos que llegan desde el formulario de crear publicación
 data class NuevaVacuna(val nombre: String, val dosis: String)
 
@@ -44,6 +51,17 @@ data class NuevaMascota(
     val peso: Double,
     val longitud: Double,
     val vacunas: List<NuevaVacuna>
+)
+
+// Datos que llegan desde el formulario de edición de publicación
+data class EdicionPublicacion(
+    val comentariosActivados: Boolean,
+    val descripcion: String,
+    val estado: EstadoPublicacion,
+    val categoria: CategoriaPublicacion,
+    val nombreUbicacion: String,
+    val latitud: Double,
+    val longitud: Double
 )
 
 object PersistenciaSimulada {
@@ -59,6 +77,7 @@ object PersistenciaSimulada {
     private val _vacunas = mutableListOf<Vacuna>()
     private val _comentarios = mutableListOf<Comentario>()
     private val _meGustas = mutableListOf<Persona_Que_Le_Gusta>()
+    private val _baneos = mutableListOf<Baneo>()
     private val _codigosGenerados = mutableListOf<String>()
 
     private val sesiones = mutableMapOf<String, SesionToken>()
@@ -66,7 +85,23 @@ object PersistenciaSimulada {
     // Publicación -> correos de los usuarios que marcaron interés
     private val interesados = mutableMapOf<Long, MutableSet<String>>()
 
-    val publicaciones: List<Publicacion> get() = _publicaciones
+    // Ids de publicaciones ocultas por su dueño
+    private val _ocultas = mutableSetOf<Long>()
+
+    // Estados que puede ver cualquier usuario en el feed y en el detalle
+    private val ESTADOS_VISIBLES_EN_FEED = setOf(
+        EstadoPublicacion.ADMITIDO,
+        EstadoPublicacion.RESUELTO
+    )
+
+    // Lo que ve el feed: visibles, no ocultas por el dueño, con estado permitido
+    // y de dueños que no estén baneados
+    val publicaciones: List<Publicacion>
+        get() = _publicaciones.filter {
+            it.id !in _ocultas &&
+                    it.estado_publicacion in ESTADOS_VISIBLES_EN_FEED &&
+                    !estaBaneado(it.usuario_duenio)
+        }
 
     init {
         _usuarios.addAll(
@@ -187,6 +222,7 @@ object PersistenciaSimulada {
         telefono: String,
         codigoMultiproposito: String
     ): Boolean {
+        // Un correo ya usado (incluso por un usuario baneado) no se puede registrar de nuevo
         if (buscarUsuarioExistente(correo_electronico) != null) return false
 
         _usuarios.add(
@@ -237,6 +273,17 @@ object PersistenciaSimulada {
         if (usuario.contrasenia != contrasenia) {
             return ResultadoLogin.Error("Correo o contraseña incorrectos")
         }
+
+        // Baneo activo: no puede iniciar sesión
+        baneoActivo(usuario.id)?.let { baneo ->
+            return ResultadoLogin.Error("Tu cuenta está baneada. Motivo: ${baneo.razon}")
+        }
+
+        // Si el baneo ya venció, la cuenta vuelve a estar activa
+        if (usuario.estado_usuario == EstadoUsuario.BANEADO) {
+            usuario.estado_usuario = EstadoUsuario.ACTIVO
+        }
+
         if (usuario.estado_usuario != EstadoUsuario.ACTIVO) {
             return ResultadoLogin.Error("Tu cuenta aún no está activa")
         }
@@ -271,10 +318,38 @@ object PersistenciaSimulada {
     fun correoDeToken(token: String): String? =
         sesiones[token]?.correoElectronico
 
+    private fun cerrarSesionesDe(correo: String) {
+        sesiones.entries.removeAll { it.value.correoElectronico == correo }
+    }
+
+    private fun usuarioDeSesion(token: String): Resultado<Usuario> {
+        if (!tokenValido(token)) return Resultado.SesionExpirada
+        val correo = correoDeToken(token) ?: return Resultado.SesionExpirada
+        val usuario = buscarUsuarioExistente(correo)
+            ?: return Resultado.Error("Usuario no encontrado")
+        return Resultado.Exito(usuario)
+    }
+
+    private fun moderadorDeSesion(token: String): Resultado<Usuario> =
+        when (val r = usuarioDeSesion(token)) {
+            is Resultado.Exito -> {
+                if (r.datos.rol == Rol.MODERADOR) {
+                    r
+                } else {
+                    Resultado.Error("Solo los moderadores pueden hacer esto")
+                }
+            }
+            is Resultado.Error -> r
+            Resultado.SesionExpirada -> Resultado.SesionExpirada
+        }
+
     // ---------- Publicaciones ----------
 
     fun obtenerPublicacion(id: Long): Publicacion? =
         _publicaciones.firstOrNull { it.id == id }
+
+    fun estaOculta(publicacionId: Long): Boolean =
+        publicacionId in _ocultas
 
     fun crearPublicacion(
         token: String,
@@ -301,7 +376,12 @@ object PersistenciaSimulada {
             es_de_moderador = usuario.rol == Rol.MODERADOR,
             fecha_publicacion = LocalDateTime.now(),
             descripcion = descripcion,
-            estado_publicacion = EstadoPublicacion.ADMITIDO,
+            // Las de moderadores nacen admitidas; las de usuarios, pendientes de revisión
+            estado_publicacion = if (usuario.rol == Rol.MODERADOR) {
+                EstadoPublicacion.ADMITIDO
+            } else {
+                EstadoPublicacion.PENDIENTE
+            },
             categoria = categoria,
             usuario_duenio = usuario.id,
             latitud = 0.0,
@@ -341,6 +421,292 @@ object PersistenciaSimulada {
         return ResultadoPublicacion.Exito
     }
 
+    // Acceso al detalle: dueño y moderadores ven cualquier publicación;
+    // el resto solo ve las que aparecen en el feed
+    fun obtenerPublicacionVisible(token: String, id: Long): Resultado<Publicacion> {
+        val usuario = when (val r = usuarioDeSesion(token)) {
+            is Resultado.Exito -> r.datos
+            is Resultado.Error -> return r
+            Resultado.SesionExpirada -> return Resultado.SesionExpirada
+        }
+
+        val pub = _publicaciones.firstOrNull { it.id == id }
+            ?: return Resultado.Error("La publicación no existe")
+
+        val esDueno = pub.usuario_duenio == usuario.id
+        val esModerador = usuario.rol == Rol.MODERADOR
+        if (esDueno || esModerador) return Resultado.Exito(pub)
+
+        val visible = pub.id !in _ocultas &&
+                pub.estado_publicacion in ESTADOS_VISIBLES_EN_FEED &&
+                !estaBaneado(pub.usuario_duenio)
+
+        return if (visible) {
+            Resultado.Exito(pub)
+        } else {
+            Resultado.Error("La publicación no está disponible")
+        }
+    }
+
+    // ---------- Historial y edición del dueño ----------
+
+    // Todas las publicaciones del usuario de la sesión, incluidas ocultas, pendientes y rechazadas
+    fun obtenerMisPublicaciones(token: String): Resultado<List<Publicacion>> =
+        when (val r = usuarioDeSesion(token)) {
+            is Resultado.Exito -> Resultado.Exito(
+                _publicaciones
+                    .filter { it.usuario_duenio == r.datos.id }
+                    .sortedByDescending { it.fecha_publicacion }
+            )
+            is Resultado.Error -> r
+            Resultado.SesionExpirada -> Resultado.SesionExpirada
+        }
+
+    fun obtenerMiPublicacion(token: String, id: Long): Resultado<Publicacion> =
+        conPublicacionDeDueno<Publicacion>(token, id) { Resultado.Exito(it) }
+
+    fun actualizarMiPublicacion(
+        token: String,
+        id: Long,
+        edicion: EdicionPublicacion
+    ): Resultado<Publicacion> =
+        conPublicacionDeDueno<Publicacion>(token, id) { actual ->
+            // El estado solo puede pasar de ADMITIDO a RESUELTO
+            val estadoFinal = when {
+                edicion.estado == actual.estado_publicacion -> actual.estado_publicacion
+                actual.estado_publicacion == EstadoPublicacion.ADMITIDO &&
+                        edicion.estado == EstadoPublicacion.RESUELTO -> EstadoPublicacion.RESUELTO
+                else -> return@conPublicacionDeDueno Resultado.Error(
+                    "Solo puedes cambiar el estado de Admitida a Resuelta"
+                )
+            }
+
+            if (edicion.descripcion.trim().length < 20) {
+                return@conPublicacionDeDueno Resultado.Error(
+                    "La descripción debe tener al menos 20 caracteres"
+                )
+            }
+            if (edicion.nombreUbicacion.isBlank()) {
+                return@conPublicacionDeDueno Resultado.Error("La ubicación no puede estar vacía")
+            }
+
+            val actualizada = actual.copy(
+                comentarios_activados = edicion.comentariosActivados,
+                descripcion = edicion.descripcion.trim(),
+                estado_publicacion = estadoFinal,
+                categoria = edicion.categoria,
+                nombre_ubicacion = edicion.nombreUbicacion.trim(),
+                latitud = edicion.latitud,
+                longitud = edicion.longitud
+            )
+
+            _publicaciones[_publicaciones.indexOfFirst { it.id == actual.id }] = actualizada
+            Resultado.Exito(actualizada)
+        }
+
+    // Devuelve true si la publicación queda oculta, false si vuelve a mostrarse
+    fun alternarOcultarMiPublicacion(token: String, id: Long): Resultado<Boolean> =
+        conPublicacionDeDueno<Boolean>(token, id) { pub ->
+            val ahoraOculta = if (pub.id in _ocultas) {
+                _ocultas.remove(pub.id)
+                false
+            } else {
+                _ocultas.add(pub.id)
+                true
+            }
+            Resultado.Exito(ahoraOculta)
+        }
+
+    fun eliminarMiPublicacion(token: String, id: Long): Resultado<Unit> =
+        conPublicacionDeDueno<Unit>(token, id) { pub ->
+            eliminarPublicacionCompleta(pub.id)
+            Resultado.Exito(Unit)
+        }
+
+    // El dueño vuelve a enviar a revisión una publicación rechazada
+    fun reenviarMiPublicacion(token: String, id: Long): Resultado<Publicacion> =
+        conPublicacionDeDueno<Publicacion>(token, id) { actual ->
+            if (actual.estado_publicacion != EstadoPublicacion.RECHAZADO) {
+                return@conPublicacionDeDueno Resultado.Error(
+                    "Solo puedes reenviar publicaciones rechazadas"
+                )
+            }
+
+            val actualizada = actual.copy(estado_publicacion = EstadoPublicacion.PENDIENTE)
+            _publicaciones[_publicaciones.indexOfFirst { it.id == actual.id }] = actualizada
+            Resultado.Exito(actualizada)
+        }
+
+    // Borra la publicación y todo lo que depende de ella
+    private fun eliminarPublicacionCompleta(publicacionId: Long) {
+        // Mascotas ligadas a esta publicación
+        val mascotaIds = _mascotaPublicacion
+            .filter { it.id_publicacion == publicacionId }
+            .map { it.id_mascota }
+        _mascotaPublicacion.removeAll { it.id_publicacion == publicacionId }
+
+        // Solo se borran las mascotas que no estén ligadas a otra publicación
+        val mascotasHuerfanas = mascotaIds.filter { mascotaId ->
+            _mascotaPublicacion.none { it.id_mascota == mascotaId }
+        }
+        _vacunas.removeAll { it.mascotaAsociada in mascotasHuerfanas }
+        _mascotas.removeAll { it.id in mascotasHuerfanas }
+
+        // Comentarios de la publicación y sus "me gusta"
+        val comentarioIds = _comentarios
+            .filter { it.publicacion_perteneciente == publicacionId }
+            .map { it.id }
+        _meGustas.removeAll { it.id_comentario in comentarioIds }
+        _comentarios.removeAll { it.id in comentarioIds }
+
+        interesados.remove(publicacionId)
+        _ocultas.remove(publicacionId)
+        _publicaciones.removeAll { it.id == publicacionId }
+    }
+
+    // Comprueba sesión y que el usuario sea dueño antes de ejecutar la acción
+    private fun <T> conPublicacionDeDueno(
+        token: String,
+        id: Long,
+        accion: (Publicacion) -> Resultado<T>
+    ): Resultado<T> {
+        val usuario = when (val r = usuarioDeSesion(token)) {
+            is Resultado.Exito -> r.datos
+            is Resultado.Error -> return r
+            Resultado.SesionExpirada -> return Resultado.SesionExpirada
+        }
+
+        val publicacion = _publicaciones.firstOrNull { it.id == id }
+            ?: return Resultado.Error("La publicación no existe")
+        if (publicacion.usuario_duenio != usuario.id) {
+            return Resultado.Error("No puedes modificar esta publicación")
+        }
+
+        return accion(publicacion)
+    }
+
+    // ---------- Moderación ----------
+
+    // El moderador solo puede admitir o rechazar publicaciones pendientes
+    fun moderarPublicacion(
+        token: String,
+        id: Long,
+        nuevoEstado: EstadoPublicacion
+    ): Resultado<Publicacion> {
+        when (val r = moderadorDeSesion(token)) {
+            is Resultado.Exito -> Unit
+            is Resultado.Error -> return r
+            Resultado.SesionExpirada -> return Resultado.SesionExpirada
+        }
+
+        if (nuevoEstado != EstadoPublicacion.ADMITIDO && nuevoEstado != EstadoPublicacion.RECHAZADO) {
+            return Resultado.Error("Solo puedes admitir o rechazar una publicación")
+        }
+
+        val index = _publicaciones.indexOfFirst { it.id == id }
+        if (index == -1) return Resultado.Error("La publicación no existe")
+
+        val actual = _publicaciones[index]
+        if (actual.estado_publicacion != EstadoPublicacion.PENDIENTE) {
+            return Resultado.Error("Solo se pueden moderar publicaciones pendientes")
+        }
+
+        val actualizada = actual.copy(estado_publicacion = nuevoEstado)
+        _publicaciones[index] = actualizada
+
+        // TODO: notificación de rechazo al dueño (pendiente de implementar)
+        return Resultado.Exito(actualizada)
+    }
+
+    // ---------- Baneos ----------
+
+    fun estaBaneado(usuarioId: Long): Boolean = baneoActivo(usuarioId) != null
+
+    private fun baneoActivo(usuarioId: Long): Baneo? {
+        val ahora = LocalDateTime.now()
+        return _baneos.firstOrNull {
+            it.usuario_duenio == usuarioId &&
+                    it.estado_baneo == EstadoBaneo.ACTIVO &&
+                    it.fecha_fin.isAfter(ahora)
+        }
+    }
+
+    // fechaFin = null significa baneo permanente
+    fun banearUsuario(
+        token: String,
+        usuarioId: Long,
+        titulo: String,
+        razon: String,
+        fechaFin: LocalDateTime?
+    ): Resultado<Baneo> {
+        val moderador = when (val r = moderadorDeSesion(token)) {
+            is Resultado.Exito -> r.datos
+            is Resultado.Error -> return r
+            Resultado.SesionExpirada -> return Resultado.SesionExpirada
+        }
+
+        val objetivo = _usuarios.firstOrNull { it.id == usuarioId }
+            ?: return Resultado.Error("El usuario no existe")
+
+        if (objetivo.id == moderador.id) {
+            return Resultado.Error("No puedes banearte a ti mismo")
+        }
+        if (objetivo.rol == Rol.MODERADOR) {
+            return Resultado.Error("No puedes banear a otro moderador")
+        }
+        if (titulo.isBlank()) return Resultado.Error("El título del baneo es obligatorio")
+        if (razon.isBlank()) return Resultado.Error("La razón del baneo es obligatoria")
+        if (estaBaneado(objetivo.id)) return Resultado.Error("Este usuario ya está baneado")
+
+        val ahora = LocalDateTime.now()
+        if (fechaFin != null && !fechaFin.isAfter(ahora)) {
+            return Resultado.Error("La fecha de fin debe ser futura")
+        }
+
+        val baneo = Baneo(
+            id = _baneos.siguienteId { it.id },
+            titulo = titulo.trim(),
+            razon = razon.trim(),
+            fecha_emision = ahora,
+            fecha_inicio = ahora,
+            fecha_fin = fechaFin ?: LocalDateTime.of(9999, 12, 31, 23, 59),
+            usuario_duenio = objetivo.id,
+            moderador = moderador.id,
+            estado_baneo = EstadoBaneo.ACTIVO
+        )
+        _baneos.add(baneo)
+
+        objetivo.estado_usuario = EstadoUsuario.BANEADO
+        cerrarSesionesDe(objetivo.correo_electronico)
+
+        // TODO: notificación de baneo (pendiente de implementar)
+        return Resultado.Exito(baneo)
+    }
+
+    fun levantarBaneo(token: String, baneoId: Long): Resultado<Unit> {
+        when (val r = moderadorDeSesion(token)) {
+            is Resultado.Exito -> Unit
+            is Resultado.Error -> return r
+            Resultado.SesionExpirada -> return Resultado.SesionExpirada
+        }
+
+        val index = _baneos.indexOfFirst { it.id == baneoId }
+        if (index == -1) return Resultado.Error("El baneo no existe")
+
+        val baneo = _baneos[index]
+        if (baneo.estado_baneo != EstadoBaneo.ACTIVO) {
+            return Resultado.Error("Este baneo ya no está activo")
+        }
+
+        _baneos[index] = baneo.copy(estado_baneo = EstadoBaneo.LEVANTADO)
+        _usuarios.firstOrNull { it.id == baneo.usuario_duenio }?.let {
+            if (it.estado_usuario == EstadoUsuario.BANEADO) {
+                it.estado_usuario = EstadoUsuario.ACTIVO
+            }
+        }
+        return Resultado.Exito(Unit)
+    }
+
     // ---------- Intereses ----------
 
     fun estaInteresado(publicacionId: Long, correo: String): Boolean =
@@ -350,6 +716,9 @@ object PersistenciaSimulada {
     fun alternarInteres(publicacionId: Long, correo: String): Boolean {
         val index = _publicaciones.indexOfFirst { it.id == publicacionId }
         if (index == -1) return false
+
+        // Sin interés en publicaciones que no están visibles para el público
+        if (_publicaciones[index].estado_publicacion !in ESTADOS_VISIBLES_EN_FEED) return false
 
         val conjunto = interesados.getOrPut(publicacionId) { mutableSetOf() }
         val ahoraInteresado = if (conjunto.contains(correo)) {
@@ -401,6 +770,10 @@ object PersistenciaSimulada {
         val publicacion = obtenerPublicacion(publicacionId)
             ?: return ResultadoComentario.Error("La publicación no existe")
 
+        // Nadie comenta en publicaciones pendientes, rechazadas u ocultas
+        if (publicacion.estado_publicacion !in ESTADOS_VISIBLES_EN_FEED) {
+            return ResultadoComentario.Error("No se puede comentar en esta publicación")
+        }
         if (!publicacion.comentarios_activados) {
             return ResultadoComentario.Error("Los comentarios están desactivados")
         }
